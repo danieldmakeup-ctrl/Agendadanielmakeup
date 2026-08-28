@@ -304,6 +304,45 @@
   .tl-who { font-family: 'Fraunces', serif; font-weight: 700; font-size: 15px; color: var(--onyx); margin: 5px 0 0; }
   .tl-svc { font-size: 12px; color: var(--taupe); margin-top: 1px; }
 
+  .planner-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .planner-nav-btn {
+    background: rgba(255,255,255,0.14); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px; width: 34px; height: 34px; font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .planner-nav-btn:hover { background: rgba(255,255,255,0.26); }
+  .planner-month-title {
+    font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; color: #FFFFFF;
+    text-transform: capitalize;
+  }
+  .planner-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+    background: rgba(255,255,255,0.10); padding: 4px; border-radius: 14px;
+  }
+  .planner-dow {
+    text-align: center; font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; color: rgba(255,255,255,0.75); padding: 6px 0 8px;
+  }
+  .planner-day {
+    background: var(--card); border-radius: 8px; min-height: 62px;
+    padding: 4px 3px; display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+  }
+  .planner-day.empty { background: transparent; }
+  .planner-day .dnum { font-size: 10px; font-weight: 700; color: var(--onyx); margin-bottom: 1px; }
+  .planner-day.today .dnum {
+    color: #FFFFFF; background: var(--gold); width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 9px;
+  }
+  .planner-chip {
+    font-size: 8px; font-weight: 700; color: #FFFFFF; border-radius: 5px; padding: 2px 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; line-height: 1.3;
+  }
+  .planner-more { font-size: 8px; color: var(--taupe); font-weight: 700; padding-left: 2px; }
+  @media (max-width: 560px) {
+    .planner-day { min-height: 54px; }
+    .planner-chip { font-size: 7px; }
+  }
+
   .fab {
     position: fixed; bottom: 26px; right: 50%;
     transform: translateX(200px);
@@ -339,6 +378,7 @@
       <button class="btn-primary" id="newBtnTop">+ Nueva cita</button>
     </div>
     <div class="tabs">
+      <button class="tab-btn" data-tab="planner">Planner</button>
       <button class="tab-btn active" data-tab="inicio">Inicio</button>
       <button class="tab-btn" data-tab="citas">Citas</button>
       <button class="tab-btn" data-tab="clientas">Clientas</button>
@@ -346,6 +386,18 @@
       <button class="btn-ghost" id="fixColorsBtn" style="padding:6px 14px; font-size:11px; color:#FFFFFF; border-color:rgba(255,255,255,0.4);">🎨 Actualizar colores</button>
       <button class="btn-ghost" id="recoverBtn" style="padding:6px 14px; font-size:11px; color:#FFFFFF; border-color:rgba(255,255,255,0.4);">↩️ Recuperar citas de Praga</button>
       <button class="btn-ghost" id="exportBtn" style="margin-left:auto; padding:6px 14px; font-size:11px; color:#FFFFFF; border-color:rgba(255,255,255,0.4);">⬇ Exportar Excel</button>
+    </div>
+    <div id="tabPlanner" class="tab-panel" style="display:none;">
+      <div class="legend">
+        <span class="litem"><span class="ldot" style="background:#4285F4"></span>A domicilio</span>
+        <span class="litem"><span class="ldot" style="background:#8A8F98"></span>Agenda Praga</span>
+      </div>
+      <div class="planner-nav">
+        <button class="planner-nav-btn" id="plannerPrev">←</button>
+        <span class="planner-month-title" id="plannerMonthTitle"></span>
+        <button class="planner-nav-btn" id="plannerNext">→</button>
+      </div>
+      <div class="planner-grid" id="plannerGrid"></div>
     </div>
     <div id="tabInicio" class="tab-panel">
       <div id="inicioList"></div>
@@ -510,12 +562,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 function switchTab(name) {
   currentTab = name;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.getElementById('tabPlanner').style.display = name === 'planner' ? 'block' : 'none';
   document.getElementById('tabInicio').style.display = name === 'inicio' ? 'block' : 'none';
   document.getElementById('tabCitas').style.display = name === 'citas' ? 'block' : 'none';
   document.getElementById('tabClientas').style.display = name === 'clientas' ? 'block' : 'none';
   document.getElementById('tabContable').style.display = name === 'contable' ? 'block' : 'none';
-  const titles = { inicio: 'Inicio', citas: 'Próximas citas', clientas: 'Clientas', contable: 'Contable' };
+  const titles = { planner: 'Planner', inicio: 'Inicio', citas: 'Próximas citas', clientas: 'Clientas', contable: 'Contable' };
   document.getElementById('sectionTitle').textContent = titles[name];
+  if (name === 'planner') renderPlanner(citasCache);
   if (name === 'inicio') renderInicio(citasCache);
   if (name === 'clientas') loadClientas();
   if (name === 'contable') loadContable();
@@ -583,9 +637,81 @@ async function loadEvents() {
     citasCache = data.items || [];
     renderEvents(applyFilter(citasCache));
     renderInicio(citasCache);
+    renderPlanner(citasCache);
   } catch (e) {
     list.innerHTML = '<div class="empty">No se pudieron cargar las citas.<br>' + e.message + '</div>';
   }
+}
+
+let plannerDate = new Date();
+plannerDate.setDate(1);
+plannerDate.setHours(0,0,0,0);
+
+document.getElementById('plannerPrev').onclick = () => {
+  plannerDate.setMonth(plannerDate.getMonth() - 1);
+  renderPlanner(citasCache);
+};
+document.getElementById('plannerNext').onclick = () => {
+  plannerDate.setMonth(plannerDate.getMonth() + 1);
+  renderPlanner(citasCache);
+};
+
+function renderPlanner(items) {
+  const grid = document.getElementById('plannerGrid');
+  const title = document.getElementById('plannerMonthTitle');
+  if (!grid || !title) return;
+
+  title.textContent = plannerDate.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+
+  const year = plannerDate.getFullYear();
+  const month = plannerDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startOffset = firstDay.getDay(); // 0 = domingo
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const byDay = {};
+  (items || []).forEach(ev => {
+    if (!ev.start || !ev.start.dateTime) return;
+    const d = new Date(ev.start.dateTime);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      if (!byDay[day]) byDay[day] = [];
+      byDay[day].push(ev);
+    }
+  });
+
+  const dowLabels = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+  let html = dowLabels.map(l => '<div class="planner-dow">' + l + '</div>').join('');
+
+  for (let i = 0; i < startOffset; i++) html += '<div class="planner-day empty"></div>';
+
+  const today = new Date();
+  const maxShow = 3;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+    const dayEvents = (byDay[day] || []).sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime));
+    let chips = dayEvents.slice(0, maxShow).map(ev => {
+      const tipo = effectiveTipo(ev);
+      const color = TIPO_COLORS[tipo] || TIPO_COLORS.domicilio;
+      const start = new Date(ev.start.dateTime);
+      const timeStr = start.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+      const parts = (ev.summary || 'Cita').split(' — ');
+      const client = parts.length > 1 ? parts[1] : (ev.summary || 'Cita');
+      return '<div class="planner-chip" style="background:' + color + '" data-id="' + ev.id + '">' + timeStr + ' ' + client + '</div>';
+    }).join('');
+    if (dayEvents.length > maxShow) {
+      chips += '<div class="planner-more">+' + (dayEvents.length - maxShow) + ' más</div>';
+    }
+    html += '<div class="planner-day' + (isToday ? ' today' : '') + '"><span class="dnum">' + day + '</span>' + chips + '</div>';
+  }
+
+  grid.innerHTML = html;
+  grid.querySelectorAll('.planner-chip').forEach(chip => {
+    chip.onclick = () => {
+      const ev = citasCache.find(e => e.id === chip.dataset.id);
+      if (ev) openModal(ev);
+    };
+  });
 }
 
 function renderInicio(items) {

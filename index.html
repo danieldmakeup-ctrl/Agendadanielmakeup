@@ -270,6 +270,40 @@
   .msg.err { background: var(--rose-soft); color: var(--rose); }
   .msg.ok { background: #E1EDE5; color: var(--ok); }
 
+  .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .legend .litem { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 600; }
+  .legend .ldot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .month-header {
+    font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; color: #FFFFFF;
+    margin: 26px 0 12px; text-transform: capitalize;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .month-header:first-of-type { margin-top: 0; }
+  .month-header::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.25); }
+
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before { content: ''; position: absolute; left: 4px; top: 3px; bottom: 3px; width: 2px; background: rgba(255,255,255,0.18); }
+  .tl-item { position: relative; padding-bottom: 12px; }
+  .tl-dot {
+    position: absolute; left: -20px; top: 6px; width: 11px; height: 11px; border-radius: 50%;
+    border: 2px solid var(--gold); background: var(--gold); box-shadow: 0 0 0 3px var(--gold);
+  }
+  .tl-card {
+    background: var(--card); border-radius: 12px; padding: 11px 14px 12px;
+    border-left: 4px solid var(--accent, #4285F4);
+    box-shadow: 0 2px 8px rgba(13,13,13,0.08);
+    cursor: pointer;
+  }
+  .tl-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .tl-when { font-size: 11px; font-weight: 700; color: var(--taupe); text-transform: capitalize; }
+  .tl-badge {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 3px 9px; border-radius: 999px; color: #FFFFFF; flex-shrink: 0;
+  }
+  .tl-who { font-family: 'Fraunces', serif; font-weight: 700; font-size: 15px; color: var(--onyx); margin: 5px 0 0; }
+  .tl-svc { font-size: 12px; color: var(--taupe); margin-top: 1px; }
+
   .fab {
     position: fixed; bottom: 26px; right: 50%;
     transform: translateX(200px);
@@ -305,14 +339,18 @@
       <button class="btn-primary" id="newBtnTop">+ Nueva cita</button>
     </div>
     <div class="tabs">
-      <button class="tab-btn active" data-tab="citas">Citas</button>
+      <button class="tab-btn active" data-tab="inicio">Inicio</button>
+      <button class="tab-btn" data-tab="citas">Citas</button>
       <button class="tab-btn" data-tab="clientas">Clientas</button>
       <button class="tab-btn" data-tab="contable">Contable</button>
       <button class="btn-ghost" id="fixColorsBtn" style="padding:6px 14px; font-size:11px; color:#FFFFFF; border-color:rgba(255,255,255,0.4);">🎨 Actualizar colores</button>
       <button class="btn-ghost" id="recoverBtn" style="padding:6px 14px; font-size:11px; color:#FFFFFF; border-color:rgba(255,255,255,0.4);">↩️ Recuperar citas de Praga</button>
       <button class="btn-ghost" id="exportBtn" style="margin-left:auto; padding:6px 14px; font-size:11px; color:#FFFFFF; border-color:rgba(255,255,255,0.4);">⬇ Exportar Excel</button>
     </div>
-    <div id="tabCitas" class="tab-panel">
+    <div id="tabInicio" class="tab-panel">
+      <div id="inicioList"></div>
+    </div>
+    <div id="tabCitas" class="tab-panel" style="display:none;">
       <div class="filter-row">
         <button class="filter-chip active" data-filter="todas" onclick="setCitasFilter('todas')">Todas</button>
         <button class="filter-chip" data-filter="domicilio" onclick="setCitasFilter('domicilio')">A domicilio</button>
@@ -453,10 +491,13 @@ const SERVICE_COLORS = {
   'Otro': '#A79C8C'
 };
 
+const TIPO_COLORS = { domicilio: '#4285F4', praga: '#8A8F98' };
+const TIPO_LABELS = { domicilio: 'A domicilio', praga: 'Agenda Praga' };
+
 let accessToken = null;
 let tokenClient = null;
 let editingEventId = null;
-let currentTab = 'citas';
+let currentTab = 'inicio';
 
 function money(n) {
   return '$' + Math.round(n || 0).toLocaleString('es-CO');
@@ -469,11 +510,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 function switchTab(name) {
   currentTab = name;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.getElementById('tabInicio').style.display = name === 'inicio' ? 'block' : 'none';
   document.getElementById('tabCitas').style.display = name === 'citas' ? 'block' : 'none';
   document.getElementById('tabClientas').style.display = name === 'clientas' ? 'block' : 'none';
   document.getElementById('tabContable').style.display = name === 'contable' ? 'block' : 'none';
-  const titles = { citas: 'Próximas citas', clientas: 'Clientas', contable: 'Contable' };
+  const titles = { inicio: 'Inicio', citas: 'Próximas citas', clientas: 'Clientas', contable: 'Contable' };
   document.getElementById('sectionTitle').textContent = titles[name];
+  if (name === 'inicio') renderInicio(citasCache);
   if (name === 'clientas') loadClientas();
   if (name === 'contable') loadContable();
 }
@@ -539,9 +582,78 @@ async function loadEvents() {
     if (!res.ok) throw new Error(data.error?.message || 'Error al cargar');
     citasCache = data.items || [];
     renderEvents(applyFilter(citasCache));
+    renderInicio(citasCache);
   } catch (e) {
     list.innerHTML = '<div class="empty">No se pudieron cargar las citas.<br>' + e.message + '</div>';
   }
+}
+
+function renderInicio(items) {
+  const el = document.getElementById('inicioList');
+  if (!el) return;
+  const dated = (items || [])
+    .filter(ev => ev.start && ev.start.dateTime)
+    .slice()
+    .sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime));
+
+  if (!dated.length) {
+    el.innerHTML = '<div class="legend">'
+      + '<span class="litem"><span class="ldot" style="background:' + TIPO_COLORS.domicilio + '"></span>A domicilio</span>'
+      + '<span class="litem"><span class="ldot" style="background:' + TIPO_COLORS.praga + '"></span>Agenda Praga</span>'
+      + '</div><div class="empty">No hay citas programadas.</div>';
+    return;
+  }
+
+  el.innerHTML = '<div class="legend">'
+    + '<span class="litem"><span class="ldot" style="background:' + TIPO_COLORS.domicilio + '"></span>A domicilio</span>'
+    + '<span class="litem"><span class="ldot" style="background:' + TIPO_COLORS.praga + '"></span>Agenda Praga</span>'
+    + '</div>';
+
+  let currentMonth = '';
+  let timelineDiv = null;
+  dated.forEach(ev => {
+    const start = new Date(ev.start.dateTime);
+    const monthKey = start.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+    if (monthKey !== currentMonth) {
+      currentMonth = monthKey;
+      const header = document.createElement('div');
+      header.className = 'month-header';
+      header.textContent = monthKey;
+      el.appendChild(header);
+      timelineDiv = document.createElement('div');
+      timelineDiv.className = 'timeline';
+      el.appendChild(timelineDiv);
+    }
+    timelineDiv.appendChild(renderTimelineItem(ev, start));
+  });
+}
+
+function renderTimelineItem(ev, start) {
+  const end = new Date(ev.end.dateTime);
+  const tipo = effectiveTipo(ev);
+  const color = TIPO_COLORS[tipo] || TIPO_COLORS.domicilio;
+  const parts = (ev.summary || 'Cita').split(' — ');
+  const service = parts.length > 1 ? parts[0] : 'Otro';
+  const client = parts.length > 1 ? parts[1] : (ev.summary || 'Cliente');
+  const dateStr = start.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' });
+  const timeStr = start.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+    + ' – ' + end.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+
+  const item = document.createElement('div');
+  item.className = 'tl-item';
+  item.innerHTML = `
+    <span class="tl-dot" style="background:${color}; border-color:${color}"></span>
+    <div class="tl-card" style="--accent:${color}">
+      <div class="tl-top">
+        <span class="tl-when">${dateStr} · ${timeStr}</span>
+        <span class="tl-badge" style="background:${color}">${TIPO_LABELS[tipo] || tipo}</span>
+      </div>
+      <p class="tl-who">${client}</p>
+      <div class="tl-svc">${service}</div>
+    </div>
+  `;
+  item.querySelector('.tl-card').onclick = () => openModal(ev);
+  return item;
 }
 
 function effectiveTipo(ev) {

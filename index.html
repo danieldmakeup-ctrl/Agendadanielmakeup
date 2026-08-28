@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel Agenda</title>
+
+<!-- Instalable como app en el celular -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5A1620">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+
+<!-- iOS: agregar a inicio como app a pantalla completa -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Agenda DM">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -304,46 +317,56 @@
   .tl-who { font-family: 'Fraunces', serif; font-weight: 700; font-size: 15px; color: var(--onyx); margin: 5px 0 0; }
   .tl-svc { font-size: 12px; color: var(--taupe); margin-top: 1px; }
 
-  .planner-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .planner-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 27px; }
   .planner-nav-btn {
     background: rgba(255,255,255,0.14); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 999px; width: 42px; height: 42px; font-size: 18px; font-weight: 700;
+    border-radius: 999px; width: 63px; height: 63px; font-size: 27px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; padding: 0;
   }
   .planner-nav-btn:hover { background: rgba(255,255,255,0.26); }
   .planner-month-title {
-    font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; color: #FFFFFF;
+    font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700; color: #FFFFFF;
     text-transform: capitalize;
   }
   .planner-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
-    background: rgba(255,255,255,0.10); padding: 6px; border-radius: 16px;
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+    background: rgba(255,255,255,0.10); padding: 9px; border-radius: 24px;
   }
   .planner-dow {
-    text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.04em; color: rgba(255,255,255,0.75); padding: 8px 0 10px;
+    text-align: center; font-size: 17px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: rgba(255,255,255,0.75); padding: 12px 0 15px;
   }
   .planner-day {
-    background: var(--card); border-radius: 10px; min-height: 108px;
-    padding: 7px 6px; display: flex; flex-direction: column; gap: 4px; overflow: hidden;
+    background: var(--card); border-radius: 15px; min-height: 162px;
+    padding: 11px 9px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
   }
   .planner-day.empty { background: transparent; }
-  .planner-day .dnum { font-size: 13px; font-weight: 700; color: var(--onyx); margin-bottom: 2px; }
+  .planner-day .dnum { font-size: 20px; font-weight: 700; color: var(--onyx); margin-bottom: 3px; }
   .planner-day.today .dnum {
-    color: #FFFFFF; background: var(--gold); width: 22px; height: 22px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-size: 11px;
+    color: #FFFFFF; background: var(--gold); width: 33px; height: 33px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
   }
   .planner-chip {
-    font-size: 11px; font-weight: 700; color: #FFFFFF; border-radius: 6px; padding: 4px 6px;
+    font-size: 17px; font-weight: 700; color: #FFFFFF; border-radius: 9px; padding: 6px 9px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; line-height: 1.4;
   }
-  .planner-more { font-size: 10px; color: var(--taupe); font-weight: 700; padding-left: 2px; }
+  .planner-more { font-size: 15px; color: var(--taupe); font-weight: 700; padding-left: 2px; }
+
+  #tabPlanner {
+    width: 100vw;
+    max-width: 1100px;
+    margin-left: calc(50% - 50vw);
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
   @media (max-width: 560px) {
-    .planner-day { min-height: 78px; padding: 5px 4px; }
-    .planner-day .dnum { font-size: 11px; }
-    .planner-chip { font-size: 9px; padding: 3px 4px; }
-    .planner-dow { font-size: 9px; padding: 6px 0 8px; }
-    .planner-month-title { font-size: 19px; }
+    .planner-day { min-height: 117px; padding: 8px 6px; }
+    .planner-day .dnum { font-size: 17px; }
+    .planner-chip { font-size: 14px; padding: 5px 6px; }
+    .planner-dow { font-size: 14px; padding: 9px 0 12px; }
+    .planner-month-title { font-size: 29px; }
+    #tabPlanner { padding: 0 16px; }
   }
 
   .fab {

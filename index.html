@@ -304,43 +304,46 @@
   .tl-who { font-family: 'Fraunces', serif; font-weight: 700; font-size: 15px; color: var(--onyx); margin: 5px 0 0; }
   .tl-svc { font-size: 12px; color: var(--taupe); margin-top: 1px; }
 
-  .planner-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .planner-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
   .planner-nav-btn {
     background: rgba(255,255,255,0.14); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 999px; width: 34px; height: 34px; font-size: 15px; font-weight: 700;
+    border-radius: 999px; width: 42px; height: 42px; font-size: 18px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; padding: 0;
   }
   .planner-nav-btn:hover { background: rgba(255,255,255,0.26); }
   .planner-month-title {
-    font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; color: #FFFFFF;
+    font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; color: #FFFFFF;
     text-transform: capitalize;
   }
   .planner-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
-    background: rgba(255,255,255,0.10); padding: 4px; border-radius: 14px;
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+    background: rgba(255,255,255,0.10); padding: 6px; border-radius: 16px;
   }
   .planner-dow {
-    text-align: center; font-size: 9px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.03em; color: rgba(255,255,255,0.75); padding: 6px 0 8px;
+    text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: rgba(255,255,255,0.75); padding: 8px 0 10px;
   }
   .planner-day {
-    background: var(--card); border-radius: 8px; min-height: 62px;
-    padding: 4px 3px; display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+    background: var(--card); border-radius: 10px; min-height: 108px;
+    padding: 7px 6px; display: flex; flex-direction: column; gap: 4px; overflow: hidden;
   }
   .planner-day.empty { background: transparent; }
-  .planner-day .dnum { font-size: 10px; font-weight: 700; color: var(--onyx); margin-bottom: 1px; }
+  .planner-day .dnum { font-size: 13px; font-weight: 700; color: var(--onyx); margin-bottom: 2px; }
   .planner-day.today .dnum {
-    color: #FFFFFF; background: var(--gold); width: 16px; height: 16px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-size: 9px;
+    color: #FFFFFF; background: var(--gold); width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
   }
   .planner-chip {
-    font-size: 8px; font-weight: 700; color: #FFFFFF; border-radius: 5px; padding: 2px 4px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; line-height: 1.3;
+    font-size: 11px; font-weight: 700; color: #FFFFFF; border-radius: 6px; padding: 4px 6px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; line-height: 1.4;
   }
-  .planner-more { font-size: 8px; color: var(--taupe); font-weight: 700; padding-left: 2px; }
+  .planner-more { font-size: 10px; color: var(--taupe); font-weight: 700; padding-left: 2px; }
   @media (max-width: 560px) {
-    .planner-day { min-height: 54px; }
-    .planner-chip { font-size: 7px; }
+    .planner-day { min-height: 78px; padding: 5px 4px; }
+    .planner-day .dnum { font-size: 11px; }
+    .planner-chip { font-size: 9px; padding: 3px 4px; }
+    .planner-dow { font-size: 9px; padding: 6px 0 8px; }
+    .planner-month-title { font-size: 19px; }
   }
 
   .fab {
@@ -686,7 +689,7 @@ function renderPlanner(items) {
   for (let i = 0; i < startOffset; i++) html += '<div class="planner-day empty"></div>';
 
   const today = new Date();
-  const maxShow = 3;
+  const maxShow = 4;
   for (let day = 1; day <= daysInMonth; day++) {
     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
     const dayEvents = (byDay[day] || []).sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime));
